@@ -28,7 +28,12 @@ app.config['SECRET_KEY'] = 'your-secret-key-here'
 # Enable CORS for Vercel frontend
 CORS(app, resources={
     r"/api/*": {
-        "origins": ["http://localhost:5000", "https://*.vercel.app", "https://quant-optimizer.onrender.com"],
+        "origins": [
+            "http://localhost:5000",
+            "https://*.vercel.app",
+            "https://quant-optimizer.onrender.com",
+            "https://quant-optimizer1.vercel.app"
+        ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"]
     }
