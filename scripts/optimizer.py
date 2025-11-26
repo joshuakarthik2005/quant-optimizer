@@ -13,6 +13,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.optimize import minimize
+from typing import Tuple
 from typing import Tuple, List
 import argparse
 import sys

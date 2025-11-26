@@ -13,6 +13,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from typing import Tuple
 import argparse
 import sys
 import os
