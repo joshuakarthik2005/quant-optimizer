@@ -1,0 +1,13 @@
+app.py
+scripts/
+data/
+outputs/
+notebooks/
+*.pyc
+__pycache__/
+*.py
+requirements.txt
+*.ipynb
+README.md
+LICENSE
+.git/

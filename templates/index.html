@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sharpe Ratio Optimizer - Portfolio Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">📊 Sharpe Ratio Optimizer</h1>
+                <nav class="nav">
+                    <button class="nav-btn active" data-tab="optimizer">Portfolio Optimizer</button>
+                    <button class="nav-btn" data-tab="backtest">Static Backtest</button>
+                    <button class="nav-btn" data-tab="rolling">Rolling Backtest</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Portfolio Optimizer Tab -->
+            <div id="optimizer-tab" class="tab-content active">
+                <div class="panel">
+                    <h2 class="panel-title">Portfolio Optimization</h2>
+                    <p class="panel-description">Find the optimal portfolio weights using Sharpe ratio maximization</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="opt-symbols">Asset Symbols</label>
+                            <input type="text" id="opt-symbols" value="SPY,GLD,AGG" placeholder="SPY,GLD,AGG">
+                            <small>Comma-separated ticker symbols</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="opt-start">Start Date</label>
+                            <input type="date" id="opt-start" value="2015-01-01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="opt-end">End Date</label>
+                            <input type="date" id="opt-end" value="2024-12-31">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="opt-rf">Risk-Free Rate</label>
+                            <input type="number" id="opt-rf" value="0.02" step="0.01" min="0" max="0.2">
+                            <small>Annual rate (e.g., 0.02 = 2%)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="opt-portfolios">Random Portfolios</label>
+                            <input type="number" id="opt-portfolios" value="5000" step="1000" min="1000">
+                            <small>For efficient frontier</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="optimize-btn" class="btn btn-primary">
+                                <span class="btn-text">Run Optimization</span>
+                                <span class="btn-loader" style="display: none;">⏳ Processing...</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="opt-results" class="results" style="display: none;">
+                        <div class="results-grid">
+                            <div class="result-card">
+                                <h3>Constrained Optimal Portfolio</h3>
+                                <div class="metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Expected Return</span>
+                                        <span class="metric-value" id="opt-const-return">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Volatility</span>
+                                        <span class="metric-value" id="opt-const-vol">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Sharpe Ratio</span>
+                                        <span class="metric-value" id="opt-const-sharpe">-</span>
+                                    </div>
+                                </div>
+                                <div class="weights" id="opt-const-weights"></div>
+                            </div>
+                            
+                            <div class="result-card">
+                                <h3>Analytical Tangency Portfolio</h3>
+                                <div class="metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Expected Return</span>
+                                        <span class="metric-value" id="opt-anal-return">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Volatility</span>
+                                        <span class="metric-value" id="opt-anal-vol">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Sharpe Ratio</span>
+                                        <span class="metric-value" id="opt-anal-sharpe">-</span>
+                                    </div>
+                                </div>
+                                <div class="weights" id="opt-anal-weights"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3>Efficient Frontier</h3>
+                            <canvas id="frontier-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Static Backtest Tab -->
+            <div id="backtest-tab" class="tab-content">
+                <div class="panel">
+                    <h2 class="panel-title">Static Portfolio Backtest</h2>
+                    <p class="panel-description">Test portfolio performance with fixed optimal weights</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="bt-symbols">Asset Symbols</label>
+                            <input type="text" id="bt-symbols" value="SPY,GLD,AGG">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bt-start">Start Date</label>
+                            <input type="date" id="bt-start" value="2015-01-01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bt-end">End Date</label>
+                            <input type="date" id="bt-end" value="2024-12-31">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bt-rf">Risk-Free Rate</label>
+                            <input type="number" id="bt-rf" value="0.02" step="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bt-cost">Transaction Cost (bps)</label>
+                            <input type="number" id="bt-cost" value="10" step="1">
+                            <small>10 bps = 0.1%</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button id="backtest-btn" class="btn btn-primary">
+                                <span class="btn-text">Run Backtest</span>
+                                <span class="btn-loader" style="display: none;">⏳ Processing...</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="bt-results" class="results" style="display: none;">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Annual Return</div>
+                                <div class="metric-value-lg" id="bt-return">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Annual Volatility</div>
+                                <div class="metric-value-lg" id="bt-vol">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Sharpe Ratio</div>
+                                <div class="metric-value-lg" id="bt-sharpe">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Max Drawdown</div>
+                                <div class="metric-value-lg" id="bt-dd">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Cumulative Return</div>
+                                <div class="metric-value-lg" id="bt-cumret">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="weights" id="bt-weights"></div>
+                        
+                        <div class="chart-container">
+                            <h3>Equity Curve</h3>
+                            <canvas id="backtest-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rolling Backtest Tab -->
+            <div id="rolling-tab" class="tab-content">
+                <div class="panel">
+                    <h2 class="panel-title">Rolling Window Backtest</h2>
+                    <p class="panel-description">Dynamic optimization with monthly rebalancing</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="roll-symbols">Asset Symbols</label>
+                            <input type="text" id="roll-symbols" value="SPY,GLD,AGG">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roll-start">Start Date</label>
+                            <input type="date" id="roll-start" value="2012-01-01">
+                            <small>Earlier start for lookback</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roll-end">End Date</label>
+                            <input type="date" id="roll-end" value="2024-12-31">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roll-lookback">Lookback (Months)</label>
+                            <input type="number" id="roll-lookback" value="36" step="6" min="12">
+                            <small>Optimization window</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roll-rf">Risk-Free Rate</label>
+                            <input type="number" id="roll-rf" value="0.02" step="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="roll-cost">Transaction Cost (bps)</label>
+                            <input type="number" id="roll-cost" value="10" step="1">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <button id="rolling-btn" class="btn btn-primary">
+                                <span class="btn-text">Run Rolling Backtest</span>
+                                <span class="btn-loader" style="display: none;">⏳ Processing...</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="roll-results" class="results" style="display: none;">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Annual Return</div>
+                                <div class="metric-value-lg" id="roll-return">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Sharpe Ratio</div>
+                                <div class="metric-value-lg" id="roll-sharpe">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Max Drawdown</div>
+                                <div class="metric-value-lg" id="roll-dd">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Rebalances</div>
+                                <div class="metric-value-lg" id="roll-rebal">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Avg Turnover</div>
+                                <div class="metric-value-lg" id="roll-turn">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Total Costs</div>
+                                <div class="metric-value-lg" id="roll-costs">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3>Equity Curve</h3>
+                            <canvas id="rolling-equity-chart"></canvas>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <h3>Portfolio Weights Evolution</h3>
+                            <canvas id="rolling-weights-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Sharpe Ratio Optimizer | Modern Portfolio Theory Implementation</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: quant-optimizer-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.0
+      - key: FLASK_ENV
+        value: production
