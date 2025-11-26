@@ -1,7 +1,7 @@
 // API Configuration
 const API_BASE_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000' 
-    : 'https://your-app.onrender.com'; // Replace with your Render URL after deployment
+    : 'https://quant-optimizer.onrender.com';
 
 // Tab Navigation
 const navBtns = document.querySelectorAll('.nav-btn');
